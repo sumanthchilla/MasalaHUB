@@ -24,6 +24,15 @@ const hasSmtpConfig = Boolean(
 );
 const emailFrom = process.env.EMAIL_FROM || (gmailUser ? `Masala HUB <${gmailUser}>` : "Masala HUB <orders@masalahub.local>");
 
+export const getEmailStatus = () => ({
+  mode: hasGmailConfig ? "gmail" : hasSmtpConfig ? "smtp" : "preview",
+  sendingEnabled: hasGmailConfig || hasSmtpConfig,
+  gmailUserConfigured: Boolean(gmailUser),
+  gmailAppPasswordConfigured: Boolean(gmailAppPassword),
+  smtpConfigured: hasSmtpConfig,
+  fromConfigured: Boolean(process.env.EMAIL_FROM),
+});
+
 const escapeHtml = (value) =>
   String(value ?? "")
     .replace(/&/g, "&amp;")

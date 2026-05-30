@@ -32,6 +32,7 @@ import {
   updateUserPassword,
 } from "./db/mysql.js";
 import {
+  getEmailStatus,
   sendForgotPasswordEmail,
   sendOrderConfirmationEmail,
   sendOrderStatusUpdateEmail,
@@ -201,6 +202,7 @@ app.get("/api/health", (_req, res) => {
     service: "masala-hub-api",
     auth: true,
     database: getDatabaseStatus(),
+    email: getEmailStatus(),
   });
 });
 
