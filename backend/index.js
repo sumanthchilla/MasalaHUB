@@ -53,6 +53,7 @@ const defaultAllowedOrigins = [
   "http://localhost:4174",
   "http://127.0.0.1:5000",
   "http://localhost:5000",
+  "https://masala-hub-two.vercel.app",
 ];
 
 const configuredAllowedOrigins = process.env.CLIENT_ORIGIN
