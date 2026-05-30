@@ -46,6 +46,7 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=your-mysql-password
 DB_NAME=masala_hub_app
+DB_SSL=false
 ```
 
 When the backend starts, it creates the configured database with `orders` and `order_items` tables if they do not already exist.

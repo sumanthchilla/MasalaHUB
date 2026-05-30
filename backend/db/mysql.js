@@ -38,15 +38,46 @@ const getDatabaseName = () => {
   return databaseName;
 };
 
-const getBaseConfig = () => ({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  waitForConnections: true,
-  connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
-  queueLimit: 0,
-});
+const isTruthyEnv = (value) =>
+  ["1", "true", "yes", "require", "required"].includes(
+    String(value || "").trim().toLowerCase()
+  );
+
+const getSslConfig = () => {
+  if (!isTruthyEnv(process.env.DB_SSL)) {
+    return undefined;
+  }
+
+  const sslConfig = {
+    minVersion: "TLSv1.2",
+  };
+  const caCertificate = String(process.env.DB_SSL_CA || "").trim();
+
+  if (caCertificate) {
+    sslConfig.ca = caCertificate.replace(/\\n/g, "\n");
+  }
+
+  if (String(process.env.DB_SSL_REJECT_UNAUTHORIZED || "").toLowerCase() === "false") {
+    sslConfig.rejectUnauthorized = false;
+  }
+
+  return sslConfig;
+};
+
+const getBaseConfig = () => {
+  const ssl = getSslConfig();
+
+  return {
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    waitForConnections: true,
+    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
+    queueLimit: 0,
+    ...(ssl ? { ssl } : {}),
+  };
+};
 
 const isDatabaseEnabled = () => process.env.DB_ENABLED !== "false";
 
