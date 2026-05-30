@@ -59,8 +59,16 @@ const configuredAllowedOrigins = process.env.CLIENT_ORIGIN
   ? process.env.CLIENT_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean)
   : [];
 
+const vercelDeploymentOrigin = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "";
+
 const allowedOrigins = [
-  ...new Set([...defaultAllowedOrigins, ...configuredAllowedOrigins]),
+  ...new Set([
+    ...defaultAllowedOrigins,
+    ...configuredAllowedOrigins,
+    vercelDeploymentOrigin,
+  ].filter(Boolean)),
 ];
 
 const getAdminAccessKey = () => String(process.env.ADMIN_ACCESS_KEY || "").trim();
@@ -634,24 +642,33 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-initializeDatabase()
-  .then((status) => {
-    if (status.connected) {
-      console.log(
-        `MySQL connected to ${status.database} at ${status.host}:${status.port}`
-      );
-    } else {
-      console.log("MySQL storage is disabled.");
-    }
-  })
-  .catch((error) => {
-    console.error(
-      "MySQL connection failed. Check DB_USER and DB_PASSWORD in .env.",
-      error.message
+const logDatabaseStatus = (status) => {
+  if (status.connected) {
+    console.log(
+      `MySQL connected to ${status.database} at ${status.host}:${status.port}`
     );
-  })
-  .finally(() => {
+  } else {
+    console.log("MySQL storage is disabled.");
+  }
+};
+
+const logDatabaseError = (error) => {
+  console.error(
+    "MySQL connection failed. Check DB_USER and DB_PASSWORD in .env.",
+    error.message
+  );
+};
+
+const bootDatabase = () => initializeDatabase().then(logDatabaseStatus).catch(logDatabaseError);
+
+if (process.env.VERCEL) {
+  bootDatabase();
+} else {
+  bootDatabase().finally(() => {
     app.listen(port, () => {
       console.log(`Masala HUB API running on http://127.0.0.1:${port}`);
     });
   });
+}
+
+export default app;
