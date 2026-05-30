@@ -1,0 +1,33 @@
+.quantity-stepper {
+  display: inline-grid;
+  grid-template-columns: 34px 38px 34px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid #e5d7ca;
+  border-radius: 8px;
+  background: #fffaf5;
+}
+
+.quantity-stepper button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: #ff6b35;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 900;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.quantity-stepper button:hover {
+  background: #ff6b35;
+  color: #fff;
+}
+
+.quantity-stepper span {
+  color: #23201d;
+  font-size: 14px;
+  font-weight: 900;
+  text-align: center;
+}

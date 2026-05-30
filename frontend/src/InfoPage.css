@@ -1,0 +1,216 @@
+.info-page {
+  min-height: calc(100svh - 74px);
+  background: linear-gradient(180deg, #fff7ef 0, #ffffff 42%, #f7faf8 100%);
+  color: #191714;
+  padding: 34px clamp(16px, 5vw, 64px) 72px;
+}
+
+.info-shell {
+  width: min(920px, 100%);
+  margin: 0 auto;
+}
+
+.info-hero {
+  margin-bottom: 28px;
+}
+
+.info-eyebrow {
+  color: #c84417;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.info-hero h1 {
+  margin: 0;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.05;
+}
+
+.info-hero p {
+  margin: 12px 0 0;
+  color: #687078;
+  line-height: 1.6;
+  max-width: 720px;
+}
+
+.info-panel {
+  border: 1px solid #e1e6eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 54px rgba(20, 24, 28, 0.08);
+  padding: clamp(22px, 4vw, 36px);
+}
+
+.info-panel + .info-panel {
+  margin-top: 20px;
+}
+
+.info-panel h2 {
+  margin: 0 0 14px;
+  font-size: clamp(22px, 3vw, 28px);
+  color: #191714;
+}
+
+.info-panel h3 {
+  margin: 22px 0 10px;
+  font-size: 18px;
+  color: #23201d;
+}
+
+.info-panel p,
+.info-panel li {
+  color: #4b4640;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.info-panel p {
+  margin: 0 0 14px;
+}
+
+.info-panel ul {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.info-panel li + li {
+  margin-top: 8px;
+}
+
+.info-contact-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.info-contact-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  border: 1px solid #e8edf2;
+  border-radius: 10px;
+  background: #fbfcfd;
+  padding: 16px;
+}
+
+.info-contact-card svg {
+  width: 22px;
+  height: 22px;
+  color: #c84417;
+  stroke-width: 2.2;
+}
+
+.info-contact-card strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #191714;
+}
+
+.info-contact-card a {
+  color: #c84417;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.info-contact-card a:hover {
+  text-decoration: underline;
+}
+
+.info-contact-card span,
+.info-contact-card p {
+  margin: 0;
+  color: #687078;
+}
+
+.info-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.info-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #3d454d;
+}
+
+.info-form input,
+.info-form textarea {
+  width: 100%;
+  border: 1px solid #d9dee5;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #191714;
+  font: inherit;
+  padding: 12px;
+}
+
+.info-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.info-form button {
+  justify-self: start;
+  min-height: 46px;
+  border: 0;
+  border-radius: 8px;
+  background: #c84417;
+  color: #fff;
+  font-weight: 900;
+  padding: 0 20px;
+  cursor: pointer;
+}
+
+.info-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.info-note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #f4fbf6;
+  color: #12623b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 620px) {
+  .info-page {
+    padding: 26px 14px 48px;
+  }
+}
+
+@media (max-width: 420px) {
+  .info-panel {
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .info-contact-card {
+    grid-template-columns: 1fr;
+  }
+
+  .info-contact-card a,
+  .info-contact-card span,
+  .info-contact-card p {
+    overflow-wrap: anywhere;
+  }
+
+  .info-form button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .info-page {
+    padding-inline: 10px;
+  }
+}

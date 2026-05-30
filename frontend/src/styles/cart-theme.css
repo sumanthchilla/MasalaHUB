@@ -1,0 +1,155 @@
+/* Cart page - Masala HUB colors only (no broken CSS variables) */
+.cart-page {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background: #fffdf8 !important;
+  color: #23201d !important;
+  padding: 42px clamp(16px, 5vw, 64px) 64px !important;
+  min-height: calc(100svh - 74px) !important;
+}
+
+.cart-page::before {
+  content: "";
+  position: absolute;
+  inset: -28px;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 107, 53, 0.12), transparent 320px),
+    radial-gradient(circle at 88% 18%, rgba(27, 111, 95, 0.1), transparent 340px),
+    linear-gradient(180deg, #fff7ef 0%, #fffdf8 42%, #f8fbf9 100%);
+  opacity: 1;
+}
+
+.cart-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(255, 107, 53, 0.14), transparent 320px),
+    radial-gradient(circle at 88% 18%, rgba(27, 111, 95, 0.1), transparent 320px);
+  pointer-events: none;
+}
+
+.cart-hero,
+.cart-layout,
+.empty-cart,
+.order-success {
+  position: relative;
+  z-index: 1;
+}
+
+.cart-items-panel,
+.order-summary,
+.empty-cart,
+.order-success {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(229, 221, 208, 0.82) !important;
+  box-shadow: 0 18px 50px rgba(35, 32, 29, 0.1) !important;
+  backdrop-filter: blur(14px);
+}
+
+.cart-items-panel {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 250, 244, 0.86)) !important;
+}
+
+.cart-items-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 253, 248, 0.78) 58%, rgba(255, 247, 239, 0.82) 100%),
+    url("/backg/hero-food.jpg") center / cover no-repeat;
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+.cart-items-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 107, 53, 0.12), transparent 240px),
+    radial-gradient(circle at 92% 14%, rgba(27, 111, 95, 0.1), transparent 280px);
+  pointer-events: none;
+}
+
+.cart-items-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cart-item {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(229, 215, 202, 0.88) !important;
+  box-shadow: 0 12px 30px rgba(35, 32, 29, 0.08) !important;
+  backdrop-filter: blur(10px);
+}
+
+.checkout-assurance span {
+  background: rgba(246, 250, 248, 0.88) !important;
+  backdrop-filter: blur(8px);
+}
+
+.cart-eyebrow {
+  color: #ff6b35 !important;
+}
+
+.cart-hero h1,
+.empty-cart h1,
+.order-success h1 {
+  color: #23201d !important;
+  font-size: clamp(36px, 5vw, 58px) !important;
+  font-weight: 900 !important;
+}
+
+.cart-hero p,
+.empty-cart p,
+.order-success p {
+  color: #71675d !important;
+}
+
+.place-order-button,
+.cart-primary-link {
+  background: #ff6b35 !important;
+  border-radius: 8px !important;
+}
+
+.place-order-button:hover:not(:disabled),
+.cart-primary-link:hover {
+  background: #ed5523 !important;
+}
+
+.payment-method-card.is-selected {
+  border-color: #ff6b35 !important;
+  background: #fff7ef !important;
+}
+
+@media (max-width: 680px) {
+  .cart-page {
+    padding: 28px 14px 48px !important;
+  }
+
+  .cart-hero h1,
+  .empty-cart h1,
+  .order-success h1 {
+    font-size: 34px !important;
+    line-height: 1.05 !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .cart-page {
+    padding: 24px 10px 44px !important;
+  }
+
+  .cart-hero h1,
+  .empty-cart h1,
+  .order-success h1 {
+    font-size: 30px !important;
+  }
+}
