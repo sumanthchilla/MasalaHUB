@@ -564,9 +564,11 @@ app.patch("/api/admin/orders/:orderId/status", requireAdmin, async (req, res) =>
     const fullOrder = await getOrderByOrderId(req.params.orderId);
 
     if (fullOrder) {
-      sendOrderStatusUpdateEmail(fullOrder).catch((emailError) => {
+      try {
+        await sendOrderStatusUpdateEmail(fullOrder);
+      } catch (emailError) {
         console.error("Unable to send order status email.", emailError.message);
-      });
+      }
     }
 
     return res.json({ order });

@@ -1,6 +1,6 @@
 # Masala HUB React App
 
-React/Vite food ordering app with an Express backend, Gmail order confirmation emails, and MySQL order storage.
+React/Vite food ordering app with an Express backend, Resend/Gmail order confirmation emails, and MySQL order storage.
 
 ## Project Structure
 
@@ -68,6 +68,32 @@ curl -H "x-admin-key: your-admin-key" http://127.0.0.1:5000/api/orders
 Admins can open `/admin` and enter `ADMIN_ACCESS_KEY` to view daily, monthly,
 and yearly order charts. Customers can open `/history` and search with the
 email and phone number used at checkout.
+
+## Email Setup for Vercel
+
+Vercel serverless functions work best with email providers that send through an
+HTTP API instead of SMTP. This app uses Resend first when `RESEND_API_KEY` is
+configured, then falls back to Gmail/SMTP through Nodemailer for local or backup
+use.
+
+Set these in Vercel Project Settings -> Environment Variables:
+
+```env
+RESEND_API_KEY=re_your_api_key
+RESEND_FROM_EMAIL=Masala HUB <orders@your-verified-domain.com>
+EMAIL_FROM=Masala HUB <orders@your-verified-domain.com>
+```
+
+Create the API key in Resend and verify your sending domain before using a
+custom `orders@...` sender. For quick account testing, Resend also supports its
+test sender, but production customer emails should use your verified domain.
+
+Local Gmail fallback still works with:
+
+```env
+GMAIL_USER=yourgmail@gmail.com
+GMAIL_APP_PASSWORD=your-16-character-app-password
+```
 
 ## Bank Payment Setup
 

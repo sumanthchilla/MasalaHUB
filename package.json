@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "npm run dev:full",
     "dev:frontend": "vite --config frontend/vite.config.js",
@@ -29,6 +32,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.14.2",
     "react-toastify": "^11.1.0",
+    "resend": "^6.12.4",
     "sweetalert2": "^11.26.25"
   },
   "devDependencies": {

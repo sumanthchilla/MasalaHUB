@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -16,21 +17,44 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "../..");
 const frontendPublicPath = path.join(projectRoot, "frontend", "public");
 
-const gmailUser = process.env.GMAIL_USER;
-const gmailAppPassword = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "");
+const getEnv = (key) => String(process.env[key] || "").trim();
+
+const resendApiKey = getEnv("RESEND_API_KEY");
+const hasResendConfig = Boolean(resendApiKey);
+const resend = hasResendConfig ? new Resend(resendApiKey) : null;
+const gmailUser = getEnv("GMAIL_USER");
+const gmailAppPassword = getEnv("GMAIL_APP_PASSWORD").replace(/\s+/g, "");
 const hasGmailConfig = Boolean(gmailUser && gmailAppPassword);
+const smtpHost = getEnv("SMTP_HOST");
+const smtpUser = getEnv("SMTP_USER");
+const smtpPass = getEnv("SMTP_PASS");
 const hasSmtpConfig = Boolean(
-  process.env.SMTP_HOST && process.env.SMTP_HOST !== "smtp.example.com"
+  smtpHost && smtpHost !== "smtp.example.com"
 );
-const emailFrom = process.env.EMAIL_FROM || (gmailUser ? `Masala HUB <${gmailUser}>` : "Masala HUB <orders@masalahub.local>");
+const configuredEmailFrom = getEnv("RESEND_FROM_EMAIL") || getEnv("EMAIL_FROM");
+const emailFrom =
+  configuredEmailFrom ||
+  (hasResendConfig
+    ? "Masala HUB <onboarding@resend.dev>"
+    : gmailUser
+      ? `Masala HUB <${gmailUser}>`
+      : "Masala HUB <orders@masalahub.local>");
+
+const getEmailMode = () => {
+  if (hasResendConfig) return "resend";
+  if (hasGmailConfig) return "gmail";
+  if (hasSmtpConfig) return "smtp";
+  return "preview";
+};
 
 export const getEmailStatus = () => ({
-  mode: hasGmailConfig ? "gmail" : hasSmtpConfig ? "smtp" : "preview",
-  sendingEnabled: hasGmailConfig || hasSmtpConfig,
+  mode: getEmailMode(),
+  sendingEnabled: hasResendConfig || hasGmailConfig || hasSmtpConfig,
+  resendConfigured: hasResendConfig,
   gmailUserConfigured: Boolean(gmailUser),
   gmailAppPasswordConfigured: Boolean(gmailAppPassword),
   smtpConfigured: hasSmtpConfig,
-  fromConfigured: Boolean(process.env.EMAIL_FROM),
+  fromConfigured: Boolean(configuredEmailFrom),
 });
 
 const escapeHtml = (value) =>
@@ -54,13 +78,13 @@ const createTransport = () => {
 
   if (hasSmtpConfig) {
     return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
+      host: smtpHost,
       port: Number(process.env.SMTP_PORT || 587),
       secure: process.env.SMTP_SECURE === "true",
-      auth: process.env.SMTP_USER
+      auth: smtpUser
         ? {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user: smtpUser,
+            pass: smtpPass,
           }
         : undefined,
     });
@@ -69,6 +93,122 @@ const createTransport = () => {
   return nodemailer.createTransport({
     jsonTransport: true,
   });
+};
+
+const contentTypesByExtension = {
+  ".avif": "image/avif",
+  ".gif": "image/gif",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+};
+
+const getAttachmentContentType = (attachment) => {
+  if (attachment.contentType) {
+    return attachment.contentType;
+  }
+
+  const extensionSource = attachment.path || attachment.filename || "";
+  return contentTypesByExtension[path.extname(extensionSource).toLowerCase()];
+};
+
+const toResendAttachment = (attachment) => {
+  if (!attachment) {
+    return null;
+  }
+
+  const filename = attachment.filename || (attachment.path ? path.basename(attachment.path) : "");
+
+  if (!filename) {
+    return null;
+  }
+
+  const resendAttachment = {
+    filename,
+  };
+
+  if (attachment.content) {
+    resendAttachment.content = Buffer.isBuffer(attachment.content)
+      ? attachment.content.toString("base64")
+      : String(attachment.content);
+  } else if (attachment.path && fs.existsSync(attachment.path)) {
+    resendAttachment.content = fs.readFileSync(attachment.path).toString("base64");
+  } else if (attachment.path && /^https?:\/\//i.test(attachment.path)) {
+    resendAttachment.path = attachment.path;
+  }
+
+  if (!resendAttachment.content && !resendAttachment.path) {
+    return null;
+  }
+
+  const contentId = attachment.contentId || attachment.cid;
+  const contentType = getAttachmentContentType(attachment);
+
+  if (contentId) {
+    resendAttachment.contentId = String(contentId).replace(/^<|>$/g, "");
+  }
+
+  if (contentType) {
+    resendAttachment.contentType = contentType;
+  }
+
+  return resendAttachment;
+};
+
+const toRecipientList = (to) => (Array.isArray(to) ? to : [to]);
+
+const sendWithResend = async ({ attachments = [], ...message }) => {
+  const resendAttachments = attachments.map(toResendAttachment).filter(Boolean);
+  const payload = {
+    ...message,
+    to: toRecipientList(message.to),
+  };
+
+  if (resendAttachments.length) {
+    payload.attachments = resendAttachments;
+  }
+
+  const { data, error } = await resend.emails.send(payload);
+
+  if (error) {
+    throw new Error(error.message || error.name || "Resend email failed.");
+  }
+
+  return {
+    accepted: payload.to,
+    messageId: data?.id || null,
+    provider: "resend",
+    response: "Queued with Resend",
+    sentForReal: true,
+  };
+};
+
+const sendEmail = async ({ attachments = [], previewMessage, ...message }) => {
+  if (hasResendConfig) {
+    return sendWithResend({
+      ...message,
+      attachments,
+    });
+  }
+
+  const transporter = createTransport();
+  const info = await transporter.sendMail({
+    ...message,
+    attachments,
+  });
+  const sentForReal = hasGmailConfig || hasSmtpConfig;
+
+  if (!sentForReal && previewMessage) {
+    console.log(previewMessage);
+  }
+
+  return {
+    ...info,
+    sentForReal,
+  };
 };
 
 const getBrandLogoAttachment = () => {
@@ -108,33 +248,24 @@ const getFoodImageAttachments = (items) =>
 
 export async function sendOrderConfirmationEmail(order) {
   const template = renderOrderConfirmationEmail(order);
-  const transporter = createTransport();
+  const attachments = [
+    getBrandLogoAttachment(),
+    ...getFoodImageAttachments(order.items),
+  ].filter(Boolean);
 
-  const info = await transporter.sendMail({
+  return sendEmail({
     from: emailFrom,
     to: order.customer.email,
     subject: template.subject,
     html: template.html,
     text: template.text,
-    attachments: [getBrandLogoAttachment(), ...getFoodImageAttachments(order.items)].filter(Boolean),
+    attachments,
+    previewMessage:
+      "Email preview only. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel to send real receipts.",
   });
-
-  const sentForReal = hasGmailConfig || hasSmtpConfig;
-
-  if (!sentForReal) {
-    console.log(
-      "Email preview only (JSON transport). Set GMAIL_USER and GMAIL_APP_PASSWORD in .env to send real receipts."
-    );
-  }
-
-  return {
-    ...info,
-    sentForReal,
-  };
 }
 
 export async function sendOrderStatusUpdateEmail(order) {
-  const transporter = createTransport();
   const status = getOrderStatus(order.status);
   const paymentStatus = getPaymentStatus(order.payment?.status);
   const deliveryZone = getDeliveryZoneLabel(order.fulfillment?.deliveryZone);
@@ -165,24 +296,19 @@ export async function sendOrderStatusUpdateEmail(order) {
     `Payment: ${paymentStatus.label}`,
   ].join("\n");
 
-  const info = await transporter.sendMail({
+  return sendEmail({
     from: emailFrom,
     to: order.customer.email,
     subject,
     html,
     text,
     attachments: [getBrandLogoAttachment()].filter(Boolean),
+    previewMessage:
+      "Order status email preview only. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel to send real updates.",
   });
-
-  return {
-    ...info,
-    sentForReal: hasGmailConfig || hasSmtpConfig,
-  };
 }
 
 export async function sendForgotPasswordEmail(email, name, otp) {
-  const transporter = createTransport();
-
   const subject = "Reset your Masala HUB password";
   const html = `
     <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eadfce; border-radius: 16px; background-color: #fffdf8;">
@@ -199,25 +325,12 @@ export async function sendForgotPasswordEmail(email, name, otp) {
   `;
   const text = `Hello ${name},\n\nWe received a request to reset your Masala HUB password. Please use the following 6-digit verification code to reset your password:\n\n${otp}\n\nThis code will expire in 15 minutes. If you did not request a password reset, you can safely ignore this email.\n\nMasala HUB Kitchen`;
 
-  const info = await transporter.sendMail({
+  return sendEmail({
     from: emailFrom,
     to: email,
     subject,
     html,
     text,
+    previewMessage: `Forgot Password Email Preview only. Verification code: ${otp}`,
   });
-
-  const sentForReal = hasGmailConfig || hasSmtpConfig;
-
-  if (!sentForReal) {
-    console.log(
-      "Forgot Password Email Preview only (JSON transport). Verification code: ",
-      otp
-    );
-  }
-
-  return {
-    ...info,
-    sentForReal,
-  };
 }
