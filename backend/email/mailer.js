@@ -421,32 +421,58 @@ const getFoodImageAttachments = (items) =>
         return null;
       }
 
+      const ext = path.extname(imagePath).toLowerCase();
+      const contentType = contentTypesByExtension[ext] || "image/jpeg";
+
       return {
         filename: path.basename(imagePath),
         path: imagePath,
         cid: getItemImageCid(item),
         contentDisposition: "inline",
+        contentType,
       };
     })
     .filter(Boolean);
 
 export async function sendOrderConfirmationEmail(order) {
+  // Validate recipient email before attempting to send
+  if (!order.customer?.email) {
+    console.warn(`[mailer] sendOrderConfirmationEmail: missing customer email for order ${order.orderId}`);
+    return { sentForReal: false, skipped: true, reason: "no-recipient-email" };
+  }
+
+  const emailMode = getEmailMode();
+  if (emailMode === "preview") {
+    console.warn(
+      "[mailer] WARNING: Email is in preview-only mode. No email will be sent.\n" +
+      "To send real emails, set one of these in your .env:\n" +
+      "  RESEND_API_KEY + RESEND_FROM_EMAIL  (recommended)\n" +
+      "  GMAIL_USER + GMAIL_APP_PASSWORD\n" +
+      "  SMTP_HOST + SMTP_USER + SMTP_PASS"
+    );
+  }
+
   const template = renderOrderConfirmationEmail(order);
   const attachments = [
     getBrandLogoAttachment(),
     ...getFoodImageAttachments(order.items),
   ].filter(Boolean);
 
-  return sendEmail({
-    from: getEmailFrom(),
-    to: order.customer.email,
-    subject: template.subject,
-    html: template.html,
-    text: template.text,
-    attachments,
-    previewMessage:
-      "Email preview only. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel to send real receipts.",
-  });
+  try {
+    return await sendEmail({
+      from: getEmailFrom(),
+      to: order.customer.email,
+      subject: template.subject,
+      html: template.html,
+      text: template.text,
+      attachments,
+      previewMessage:
+        "Email preview only. Set RESEND_API_KEY and RESEND_FROM_EMAIL in Vercel to send real receipts.",
+    });
+  } catch (err) {
+    console.error(`[mailer] Failed to send order confirmation for ${order.orderId}:`, err?.message || err);
+    throw err;
+  }
 }
 
 export async function sendOrderStatusUpdateEmail(order) {
